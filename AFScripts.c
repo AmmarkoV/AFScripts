@@ -1,14 +1,22 @@
 #include "AFScripts.h"
 #include <string.h>
 
-bool AFSContextOK(struct AFSContext * afs)
+unsigned int AFSVersion()
 {
-    if ( afs == 0 ) { return false; }
-    return true;
+  return 5;
 }
 
+unsigned char AFSContextOK(struct AFSContext * afs)
+{
+    if ( afs == 0 ) { return false; }
+    return 1;
+}
 
-bool StartParsingFile(struct AFSContext * afs , char * filename)
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// FILE PARSING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+unsigned char StartParsingFile(struct AFSContext * afs , char * filename)
 {
    if (!AFSContextOK(afs)) { return false; }
    afs->fp = fopen(filename,"r");
@@ -17,13 +25,13 @@ bool StartParsingFile(struct AFSContext * afs , char * filename)
    afs->sanity_byte=AFS_SANITY_BYTE_VALUE;
 
 
-   return true;
+   return 1;
 }
 
 
-bool GetNextLine(struct AFSContext * afs ,char * line,unsigned int linelen)
+unsigned char GetNextLineFile(struct AFSContext * afs ,char * line,unsigned int linelen)
 {
-    if (!AFSContextOK(afs)) { return false; }
+    if (!AFSContextOK(afs)) { return 0; }
     if ( afs->fp != 0 ) {
                           bool retres = (fgets(line,linelen,afs->fp)!=0);
                           unsigned int len = strlen ( line );
@@ -40,14 +48,91 @@ bool GetNextLine(struct AFSContext * afs ,char * line,unsigned int linelen)
 
                           return retres;
                         }
-    return false;
+    return 0;
 }
 
 
-bool StopParsingFile(struct AFSContext * afs)
+unsigned char StopParsingFile(struct AFSContext * afs)
 {
   if (!AFSContextOK(afs)) { return false; }
   fclose(afs->fp);
-  return true;
+  return 1;
 }
 
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// STRING PARSING <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+unsigned char StartParsingString(struct AFSContext * afs , char * string , unsigned int string_len)
+{
+   afs->datastream = (unsigned char * ) string;
+   afs->datastream_len = string_len;
+   afs->datastream_pos = 0;
+   afs->sanity_byte=AFS_SANITY_BYTE_VALUE;
+   return 1;
+}
+
+unsigned char NoNextLineString(struct AFSContext * afs )
+{
+  if (  ( afs->datastream!=0 ) && ( afs->datastream_pos < afs->datastream_len ) && ( afs->datastream_len>0 ) ) { return 0; }
+  return 1;
+}
+
+unsigned int GetNextLineString(struct AFSContext * afs ,char * line,unsigned int linelen)
+{
+
+    if (!AFSContextOK(afs)) { return 0; }
+
+    if ( NoNextLineString(afs)==0 )
+                        {
+                           if ( ( line==0 ) || ( linelen == 0 ) ) { return 0; }
+
+                           unsigned int start = afs->datastream_pos;
+                           unsigned int i = start;
+
+                           //printf("Starting parsing from %u ",afs->datastream_pos);
+                           line[0]=0;
+                           while  ( ( i-start<linelen ) && ( i < afs->datastream_len ) )
+                           {
+                             if ( afs->datastream[i]==0 )
+                             {
+                               // REACHED STRING END!
+                               line[i-start] = 0;
+                               break;
+                             } else
+                             if ( ( afs->datastream[i]!=10 ) && ( afs->datastream[i]!=13 ) )
+                             {
+                               line[i-start] = afs->datastream[i];
+                             }
+                               else
+                             {
+                               line[i-start] = 0;
+                               break;
+                               //printf("BREAKED! THIS SHOULD NOT BE VISIBLE\n");
+                             }
+
+                             //printf(" %c ",line[i-start]);
+
+                             ++i;
+                           }
+
+                           while ( ( i < afs->datastream_len ) && ( ( afs->datastream[i]==10 ) || ( afs->datastream[i]==13 ) ) )
+                           {
+                             //printf(" skip cr/lf ");
+                             ++i;
+                           }
+
+                           line[i-start] = 0;
+                           afs->datastream_pos = i;
+                           //printf("ending parsing at %u \n",afs->datastream_pos);
+                           return i-start;
+                        }
+    return 0;
+}
+
+unsigned char StopParsingString(struct AFSContext * afs)
+{
+    if (!AFSContextOK(afs)) { return 0; }
+    return 1;
+}
