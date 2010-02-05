@@ -8,7 +8,7 @@ extern "C" {
 
 #include <stdio.h>
 
-const int AFS_SANITY_BYTE_VALUE=666069;
+#define AFS_SANITY_BYTE_VALUE 666069;
 
 struct AFSContext
 {
@@ -24,12 +24,13 @@ struct AFSContext
 unsigned int AFSVersion();
 
 unsigned char StartParsingFile(struct AFSContext * afs , char * filename);
-unsigned char GetNextLine(struct AFSContext * afs ,char * line,unsigned int linelen);
+unsigned char GetNextLineFile(struct AFSContext * afs ,char * line,unsigned int linelen);
 unsigned char StopParsingFile(struct AFSContext * afs);
 
 unsigned char StartParsingString(struct AFSContext * afs , char * string , unsigned int string_len);
 unsigned char NoNextLineString(struct AFSContext * afs );
 unsigned int GetNextLineString(struct AFSContext * afs ,char * line,unsigned int linelen);
+unsigned char MergeLineStringAtPos(struct AFSContext * afs ,unsigned int pos, char * line,unsigned int linelen);
 unsigned char StopParsingString(struct AFSContext * afs);
 
 #ifdef __cplusplus

@@ -116,6 +116,8 @@ unsigned int GetNextLineString(struct AFSContext * afs ,char * line,unsigned int
 
                              ++i;
                            }
+                           line[i-start] = 0;
+
 
                            while ( ( i < afs->datastream_len ) && ( ( afs->datastream[i]==10 ) || ( afs->datastream[i]==13 ) ) )
                            {
@@ -123,12 +125,16 @@ unsigned int GetNextLineString(struct AFSContext * afs ,char * line,unsigned int
                              ++i;
                            }
 
-                           line[i-start] = 0;
                            afs->datastream_pos = i;
                            //printf("ending parsing at %u \n",afs->datastream_pos);
                            return i-start;
                         }
     return 0;
+}
+
+unsigned char MergeLineStringAtPos(struct AFSContext * afs ,unsigned int pos, char * line,unsigned int linelen)
+{
+  return 0;
 }
 
 unsigned char StopParsingString(struct AFSContext * afs)
